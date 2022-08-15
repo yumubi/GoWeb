@@ -105,13 +105,31 @@ func Login(c *gin.Context) {
 		return
 	}
 	//发放token
-	token := 111
+	token, err := common.ReleaseToken(user)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"code": 500,
+			"msg":  "系统异常",
+		})
+		log.Println("token err", err)
+		return
+	}
 	c.JSON(http.StatusOK, gin.H{
 		"code": 200,
 		"data": gin.H{
 			"token": token,
 		},
 		"msg": "登录成功",
+	})
+}
+
+func Info(c *gin.Context) {
+	user, _ := c.Get("user")
+	c.JSON(http.StatusOK, gin.H{
+		"code": 200,
+		"data": gin.H{
+			"user": user,
+		},
 	})
 }
 
