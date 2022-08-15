@@ -3,6 +3,7 @@ package controller
 import (
 	"gin/common"
 	"gin/model"
+	"gin/response"
 	"gin/util"
 	"github.com/gin-gonic/gin"
 	"golang.org/x/crypto/bcrypt"
@@ -19,17 +20,11 @@ func Register(c *gin.Context) {
 	phone := c.PostForm("phone")
 	//数据验证
 	if len(phone) != 11 {
-		c.JSON(http.StatusUnprocessableEntity, gin.H{
-			"code": 422,
-			"msg":  "手机号必须为11位",
-		})
+		response.Response(c, http.StatusUnprocessableEntity, 422, nil, "手机号必须为11位")
 		return
 	}
 	if len(password) < 6 {
-		c.JSON(http.StatusUnprocessableEntity, gin.H{
-			"code": 422,
-			"msg":  "密码不能小于6位",
-		})
+		response.Response(c, http.StatusUnprocessableEntity, 422, nil, "密码不能小于6位")
 		return
 	}
 	if len(name) == 0 {
@@ -38,20 +33,14 @@ func Register(c *gin.Context) {
 	log.Println(name, password, phone)
 	//判断手机号是否存在
 	if isPhoneExist(db, phone) {
-		c.JSON(http.StatusUnprocessableEntity, gin.H{
-			"code": 422,
-			"msg":  "手机号已存在",
-		})
+		response.Response(c, http.StatusUnprocessableEntity, 422, nil, "手机号已存在")
 		return
 	}
 	//创建用户
 	//对密码进行加密
 	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{
-			"code": 500,
-			"msg":  "服务器错误",
-		})
+		response.Response(c, http.StatusInternalServerError, 500, nil, "服务器错误")
 		return
 	}
 	newUser := model.User{
@@ -73,64 +62,42 @@ func Login(c *gin.Context) {
 	phone := c.PostForm("phone")
 	//数据验证
 	if len(phone) != 11 {
-		c.JSON(http.StatusUnprocessableEntity, gin.H{
-			"code": 422,
-			"msg":  "手机号必须为11位",
-		})
+		response.Response(c, http.StatusUnprocessableEntity, 422, nil, "手机号必须为11位")
 		return
 	}
 	if len(password) < 6 {
-		c.JSON(http.StatusUnprocessableEntity, gin.H{
-			"code": 422,
-			"msg":  "密码不能小于6位",
-		})
+		response.Response(c, http.StatusUnprocessableEntity, 422, nil, "密码不能小于6位")
 		return
 	}
 	var user model.User
 	db.Debug().Where("phone = ?", phone).First(&user)
 	if user.ID == 0 {
-		c.JSON(http.StatusBadRequest, gin.H{
-			"code": 400,
-			"msg":  "用户不存在",
-		})
+		response.Response(c, http.StatusBadRequest, 400, nil, "用户不存在")
 		return
 	}
 	//判断密码是否正确
 	err := bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(password))
 	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{
-			"code": 400,
-			"msg":  "密码错误",
-		})
+		response.Response(c, http.StatusBadRequest, 400, nil, "密码错误")
 		return
 	}
 	//发放token
 	token, err := common.ReleaseToken(user)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{
-			"code": 500,
-			"msg":  "系统异常",
-		})
+		response.Response(c, http.StatusInternalServerError, 500, nil, "系统异常")
 		log.Println("token err", err)
 		return
 	}
-	c.JSON(http.StatusOK, gin.H{
-		"code": 200,
-		"data": gin.H{
-			"token": token,
-		},
-		"msg": "登录成功",
-	})
+	response.Response(c, http.StatusOK, 500, gin.H{
+		"token": token,
+	}, "系统异常")
 }
 
 func Info(c *gin.Context) {
 	user, _ := c.Get("user")
-	c.JSON(http.StatusOK, gin.H{
-		"code": 200,
-		"data": gin.H{
-			"user": user,
-		},
-	})
+	response.Success(c, gin.H{
+		"user": user,
+	}, "登录成功")
 }
 
 func isPhoneExist(db *gorm.DB, phone string) bool {

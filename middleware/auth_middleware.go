@@ -2,6 +2,7 @@ package middleware
 
 import (
 	"gin/common"
+	"gin/dto"
 	"gin/model"
 	"github.com/gin-gonic/gin"
 	"net/http"
@@ -44,6 +45,7 @@ func AuthMiddleware() gin.HandlerFunc {
 			c.Abort()
 			return
 		}
-		c.Set("user", user)
+		userDto := dto.ToUserDto(user)
+		c.Set("user", userDto)
 	}
 }
