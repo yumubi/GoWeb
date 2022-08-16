@@ -3,15 +3,23 @@ package common
 import (
 	"fmt"
 	"gin/model"
+	"github.com/spf13/viper"
 	"gorm.io/driver/mysql"
 	"gorm.io/gorm"
 	"log"
 )
 
-var DB *gorm.DB = initDB()
+var DB *gorm.DB
 
-func initDB() *gorm.DB {
-	url := "root:yuanxiao88110@tcp(127.0.0.1:3306)/gin?charset=utf8mb4&parseTime=True&loc=Local"
+func InitDB() *gorm.DB {
+	username := viper.GetString("datasource.username")
+	password := viper.GetString("datasource.password")
+	host := viper.GetString("datasource.host")
+	port := viper.GetString("datasource.port")
+	database := viper.GetString("datasource.database")
+	charset := viper.GetString("datasource.charset")
+	url := fmt.Sprintf("%s:%s@tcp(%s:%s)/%s?charset=%s&parseTime=True&loc=Local", username, password, host, port, database, charset)
+	println(url)
 	db, err := gorm.Open(mysql.Open(url))
 	if err != nil {
 		fmt.Println(err)

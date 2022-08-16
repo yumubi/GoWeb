@@ -15,9 +15,11 @@ import (
 func Register(c *gin.Context) {
 	db := common.GetDB()
 	//获取参数
-	name := c.PostForm("name")
-	password := c.PostForm("password")
-	phone := c.PostForm("phone")
+	requestUser := model.User{}
+	c.Bind(&requestUser)
+	name := requestUser.Name
+	password := requestUser.Password
+	phone := requestUser.Phone
 	//数据验证
 	if len(phone) != 11 {
 		response.Response(c, http.StatusUnprocessableEntity, 422, nil, "手机号必须为11位")
@@ -49,10 +51,16 @@ func Register(c *gin.Context) {
 		Phone:    phone,
 	}
 	db.Debug().Create(&newUser)
-	c.JSON(http.StatusOK, gin.H{
-		"code":    200,
-		"message": "注册成功",
-	})
+	//发放token
+	token, err := common.ReleaseToken(requestUser)
+	if err != nil {
+		response.Response(c, http.StatusInternalServerError, 500, nil, "系统异常")
+		log.Println("token err", err)
+		return
+	}
+	response.Response(c, http.StatusOK, 200, gin.H{
+		"token": token,
+	}, "注册成功")
 }
 
 func Login(c *gin.Context) {
@@ -90,7 +98,7 @@ func Login(c *gin.Context) {
 	}
 	response.Response(c, http.StatusOK, 500, gin.H{
 		"token": token,
-	}, "系统异常")
+	}, "登录成功")
 }
 
 func Info(c *gin.Context) {

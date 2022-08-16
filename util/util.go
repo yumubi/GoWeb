@@ -1,6 +1,8 @@
 package util
 
-import "math/rand"
+import (
+	"math/rand"
+)
 
 func RandomString(i int) string {
 	letters := []byte("abcdefghijklmnopqrstuvwxyz")
